@@ -9,23 +9,6 @@ with open(f'{name}.svg','r') as f:
 #        print(c,line)
         c+=1
         line = f.readline().strip()
-        if line[:5]=='<path':
-            line = line.split()[2:][0][3:]
-            line = re.sub(r'\s+', '', line)
-            points = parse_path(line)
-            path = parse_path(line)
-            # Extract points
-            points = []
-            for segment in path:
-                try:
-                    start = (segment.start.real, segment.start.imag)
-                    end = (segment.end.real, segment.end.imag)
-                    if not points or points[-1] != start:
-                        points.append(start)
-                    points.append(end)
-                except AttributeError:
-                    pass  # Ignore invalid segments
-            break
         
         if line[:8] == "<polygon":
             line = line.split()[2:]

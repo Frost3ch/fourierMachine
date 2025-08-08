@@ -6,6 +6,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.frosty.fouriermachine.FourierMachine;
 import net.frosty.fouriermachine.entity.FourierArmManager;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
@@ -13,6 +15,7 @@ import net.minecraft.particle.DustParticleEffect;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
@@ -41,6 +44,7 @@ public class FourierArm {
     private static float dThickness;
     private float size;
     private float thickness;
+    private float translationSpeed=0;
 
     private static boolean completedCycle = false;
     private boolean isF1 = false;
@@ -50,13 +54,13 @@ public class FourierArm {
     }
 
     public static void setParticleSize(Float s){
-        dSize = s;
+        dSize = 0.05F*s;
     }
     public static void setArmThickness(Float s){
-        dThickness = s;
+        dThickness = 0.1F*s;
     }
 
-    public FourierArm(Vector3i color, Vec3d pivot, float radius, float rotationSpeed, World world, float angle, boolean f1, FourierArmManager m) {
+    public FourierArm(Vector3i color, Vec3d pivot, float radius, float rotationSpeed, World world, float angle, boolean f1, FourierArmManager m, Float tSpeed) {
         startingAngle = angle;
         currentAngle = angle;
         this.color = color;
@@ -70,12 +74,13 @@ public class FourierArm {
         manager=m;
         size = dSize;
         thickness = dThickness;
+        translationSpeed = tSpeed;
 
         System.out.println("Fourier Arm Initialized");
 
     }
 
-    public FourierArm(Vector3i color, FourierArm parent, float radius, float rotationSpeed, World world, float angle, boolean f1,FourierArmManager m) {
+    public FourierArm(Vector3i color, FourierArm parent, float radius, float rotationSpeed, World world, float angle, boolean f1,FourierArmManager m, Float tSpeed) {
         startingAngle = angle;
         currentAngle = angle;
         this.color = color;
@@ -90,6 +95,7 @@ public class FourierArm {
         manager=m;
         size = dSize;
         thickness = dThickness;
+        translationSpeed = tSpeed;
 
         System.out.println("Fourier Arm Child Initialized");
 
@@ -100,13 +106,32 @@ public class FourierArm {
     }
 
     public void tick() {
+
         isPrimed = true;
         previousAngle = currentAngle;
         currentAngle += rotationSpeed;
+
         if (isF1) {
-            if (currentAngle - 4 * Math.PI > startingAngle) {
-                completedCycle = true;
+            if (translationSpeed!=0) {
+                ArrayList<Vec3d> ep = manager.getEndpoints();
+                ArrayList<Vec3d> temp = new ArrayList<>();
+                int endpointCap = 2000;
+                while (ep.size()>endpointCap){
+                    ep.removeFirst();
+                }
+                for (Vec3d p:ep){
+                        temp.add(new Vec3d(p.x + translationSpeed / 20, p.y, p.z));
+                }
+                System.out.println(temp.size());
+                manager.setEndpoints(temp);
             }
+
+            else{
+                if (currentAngle - 4 * Math.PI > startingAngle) {
+                    completedCycle = true;
+                }
+            }
+
         }
     }
 
@@ -114,7 +139,7 @@ public class FourierArm {
         isEnd = gamer;
     }
 
-    public void render(WorldRenderContext context, MinecraftServer server, DustParticleEffect armParticle, boolean isFrozen) {
+    public void render(WorldRenderContext context, MinecraftServer server, boolean isFrozen, boolean isBlocks) {
 
         if (parentArm!=null) {
             pivot = parentArm.getEndpoint();
@@ -135,7 +160,7 @@ public class FourierArm {
 
         double dx = radius * Math.cos(interpolatedAngle);
         double dy = radius * Math.sin(interpolatedAngle);
-        endpoint = new Vec3d((pivot.x + dx), (pivot.y + dy), 0);
+        endpoint = new Vec3d((pivot.x + dx), (pivot.y + dy), (pivot.z));
 
 
         matrices.push();
@@ -174,9 +199,19 @@ public class FourierArm {
             if (!completedCycle){
 //                System.out.println("added another Endpoint...");
                 ArrayList<Vec3d> endpoints = manager.getEndpoints();
-                endpoints.add(endpoint);
+                if (translationSpeed!=0){
+                    endpoints.add(new Vec3d((float) pivot.x + radius,endpoint.y,endpoint.z));
+                }
+                else {
+                    endpoints.add(endpoint);
+                }
+
                 manager.setEndpoints(endpoints);
             }
+            if (isBlocks){
+                server.getOverworld().setBlockState(new BlockPos((int)Math.round(endpoint.x),(int)Math.round(endpoint.y),(int)Math.round(endpoint.z)), Blocks.BLACK_CONCRETE.getDefaultState());
+            }
+
             ArrayList<Vec3d> endpoints = manager.getEndpoints();
             if (endpoints!=null) {
                 for (Vec3d endpoint : endpoints) {

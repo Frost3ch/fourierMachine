@@ -18,6 +18,7 @@ public class FourierArmManager {
     private boolean resetScheduled = false;
     private  ArrayList<Vec3d> endpoints = new ArrayList<Vec3d>();
     public static boolean isFrozen = false;
+    public static boolean isBlocks = false;
 
     public  ArrayList<Vec3d> getEndpoints(){
         return endpoints;
@@ -45,9 +46,9 @@ public class FourierArmManager {
 //            }
 
             if (prev == null) {
-                arm = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), new Vec3d(x, y, z), (float) radius*10, (float) (speed*(2* Math.PI*freq/ fourierY.length)), server.getOverworld(), (float) phase, (freq==1),this);
+                arm = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), new Vec3d(x, y, z), (float) radius*10, (float) (speed*(2* Math.PI*freq/ fourierY.length)), server.getOverworld(), (float) phase, (freq==1),this,0F);
             } else {
-                arm = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), prev, (float) radius*10, (float) (speed*(2* Math.PI*freq/fourierY.length)), server.getOverworld(), (float) phase, (freq==1), this);
+                arm = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), prev, (float) radius*10, (float) (speed*(2* Math.PI*freq/fourierY.length)), server.getOverworld(), (float) phase, (freq==1), this,0F);
             }
 
             prev = arm;
@@ -60,8 +61,8 @@ public class FourierArmManager {
     }
 
     public void defineArms(Integer x, Integer y, Integer z, MinecraftServer server, Float size, Float speed) {
-        FourierArm arm1 = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), new Vec3d(x, y, z), (float) size, (float) (speed*1), server.getOverworld(), (float) 0, false,this);
-        FourierArm arm2 = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), arm1, (float) size, (float) (speed * Math.PI), server.getOverworld(), (float) 0, false, this);
+        FourierArm arm1 = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), new Vec3d(x, y, z), (float) size, (float) (speed*1), server.getOverworld(), (float) 0, false,this,0F);
+        FourierArm arm2 = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), arm1, (float) size, (float) (speed * Math.PI), server.getOverworld(), (float) 0, false, this,0F);
         addArm(arm1);
         addArm(arm2);
         arm2.setIsEnd(true);
@@ -69,12 +70,22 @@ public class FourierArmManager {
 
         }
 
+    public void defineArms(Integer x, Integer y, Integer z, MinecraftServer server, Float size, Float speed, Float translationSpeed) {
+        FourierArm arm1 = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), new Vec3d(x, y, z), (float) size, (float) (speed*1), server.getOverworld(), (float) 0, true,this, translationSpeed);
+        FourierArm arm2 = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), arm1, (float) size/2, (float) (-speed *2), server.getOverworld(), (float) -Math.PI/2, false, this, translationSpeed);
+        addArm(arm1);
+        addArm(arm2);
+        arm2.setIsEnd(true);
+        ready = true;
+
+    }
+
 
     public void addArm(FourierArm arm) {
         arms.add(arm);
     }
 
-    public void register(MinecraftServer server, DustParticleEffect armParticle) {
+    public void register(MinecraftServer server) {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (resetScheduled){
                 arms.clear();
@@ -92,7 +103,7 @@ public class FourierArmManager {
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             if (ready) {
                 for (FourierArm arm : arms) {
-                    arm.render(context, server, armParticle, isFrozen);
+                    arm.render(context, server, isFrozen, isBlocks);
                 }
             }
         });

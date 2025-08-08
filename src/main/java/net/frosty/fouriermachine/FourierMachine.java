@@ -14,8 +14,8 @@ public class FourierMachine implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		FourierArm.setArmThickness(0.1F);
-		FourierArm.setParticleSize(0.05F);
+		FourierArm.setArmThickness(1F);
+		FourierArm.setParticleSize(1F);
 		CommandRegistrationCallback.EVENT.register(CreateArmCommand::register);
 
 //		ServerLifecycleEvents.SERVER_STARTED.register(server-> {

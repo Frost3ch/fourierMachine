@@ -41,6 +41,14 @@ public class CreateArmCommand {
                  .then(CommandManager.argument("size", FloatArgumentType.floatArg())
                  .then(CommandManager.argument("speed", FloatArgumentType.floatArg()).executes(CreateArmCommand::runPi)))))));
 
+         dispatcher.register(CommandManager.literal("wave")
+                 .then(CommandManager.argument("x", IntegerArgumentType.integer())
+                 .then(CommandManager.argument("y", IntegerArgumentType.integer())
+                 .then(CommandManager.argument("z", IntegerArgumentType.integer())
+                 .then(CommandManager.argument("size", FloatArgumentType.floatArg())
+                 .then(CommandManager.argument("speed", FloatArgumentType.floatArg())
+                 .then(CommandManager.argument("translationSpeed", FloatArgumentType.floatArg()).executes(CreateArmCommand::wave))))))));
+
          dispatcher.register(CommandManager.literal("fourierArmSize")
                  .then(CommandManager.argument("size", FloatArgumentType.floatArg())
                  .executes(CreateArmCommand::setArmSize)));
@@ -52,8 +60,14 @@ public class CreateArmCommand {
          dispatcher.register(CommandManager.literal("resetFourier").executes(CreateArmCommand::reset));
 
          dispatcher.register(CommandManager.literal("freeze").executes(CreateArmCommand::freeze));
+
+         dispatcher.register(CommandManager.literal("blocks").executes(CreateArmCommand::blocks));
      }
 
+    private static int blocks(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        FourierArmManager.isBlocks = !(FourierArmManager.isBlocks);
+        return 1;
+    }
 
     private static int freeze(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         FourierArmManager.isFrozen = !(FourierArmManager.isFrozen);
@@ -163,10 +177,9 @@ public class CreateArmCommand {
          System.out.println("computed DFT");
 
          MinecraftServer server = context.getSource().getServer();
-         DustParticleEffect particle = new DustParticleEffect(new Vector3f(1,0,0),3.0F);
 
          FourierArmManager manager = new FourierArmManager();
-         manager.register(server, particle);
+         manager.register(server);
          manager.defineArms(Y,x,y,z,server,speed);
          managerList.add(manager);
 
@@ -182,14 +195,33 @@ public class CreateArmCommand {
         Float size = FloatArgumentType.getFloat(context, "size");
         Float speed = FloatArgumentType.getFloat(context, "speed");
         MinecraftServer server = context.getSource().getServer();
-        DustParticleEffect particle = new DustParticleEffect(new Vector3f(1,0,0),3.0F);
 
         FourierArmManager manager = new FourierArmManager();
-        manager.register(server, particle);
+        manager.register(server);
         manager.defineArms(x,y,z,server,size,speed);
         managerList.add(manager);
 
         System.out.println("Pi Visualisation Created}");
+        return 1;
+    }
+
+    private static int wave(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+
+        Integer x = IntegerArgumentType.getInteger(context, "x");
+        Integer y = IntegerArgumentType.getInteger(context, "y");
+        Integer z = IntegerArgumentType.getInteger(context, "z");
+        Float size = FloatArgumentType.getFloat(context, "size");
+        Float speed = FloatArgumentType.getFloat(context, "speed");
+        Float translationSpeed = FloatArgumentType.getFloat(context, "translationSpeed");
+
+        MinecraftServer server = context.getSource().getServer();
+
+        FourierArmManager manager = new FourierArmManager();
+        manager.register(server);
+        manager.defineArms(x,y,z,server,size,speed,translationSpeed);
+        managerList.add(manager);
+
+        System.out.println("Generating wave, translation speed is: " + translationSpeed);
         return 1;
     }
 
