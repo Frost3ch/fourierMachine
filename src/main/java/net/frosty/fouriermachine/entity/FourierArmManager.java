@@ -17,6 +17,7 @@ public class FourierArmManager {
     private boolean ready = false;
     private boolean resetScheduled = false;
     private  ArrayList<Vec3d> endpoints = new ArrayList<Vec3d>();
+    public static boolean isFrozen = false;
 
     public  ArrayList<Vec3d> getEndpoints(){
         return endpoints;
@@ -31,7 +32,7 @@ public class FourierArmManager {
         ready = false;
     }
 
-    public void defineArms(Double[][] fourierY, Integer x, Integer y, Integer z, MinecraftServer server) {
+    public void defineArms(Double[][] fourierY, Integer x, Integer y, Integer z, MinecraftServer server, Float speed) {
         FourierArm prev = null;
         FourierArm arm = null;
         for (int i = 0; i < fourierY.length; i++) {
@@ -44,9 +45,9 @@ public class FourierArmManager {
 //            }
 
             if (prev == null) {
-                arm = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), new Vec3d(x, y, z), (float) radius*10, (float) (2* Math.PI*freq/ fourierY.length), server.getOverworld(), (float) phase, (freq==1),this);
+                arm = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), new Vec3d(x, y, z), (float) radius*10, (float) (speed*(2* Math.PI*freq/ fourierY.length)), server.getOverworld(), (float) phase, (freq==1),this);
             } else {
-                arm = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), prev, (float) radius*10, (float) (2* Math.PI*freq/fourierY.length), server.getOverworld(), (float) phase, (freq==1), this);
+                arm = new FourierArm(new Vector3i((int) (Math.random() * 255), (int) (Math.random() * 255), (int) (Math.random() * 255)), prev, (float) radius*10, (float) (speed*(2* Math.PI*freq/fourierY.length)), server.getOverworld(), (float) phase, (freq==1), this);
             }
 
             prev = arm;
@@ -79,9 +80,11 @@ public class FourierArmManager {
                 arms.clear();
                 resetScheduled = false;
             }
-            if (ready) {
-                for (FourierArm arm : arms) {
-                    arm.tick();
+            if (!isFrozen) {
+                if (ready) {
+                    for (FourierArm arm : arms) {
+                        arm.tick();
+                    }
                 }
             }
         });
@@ -89,7 +92,7 @@ public class FourierArmManager {
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             if (ready) {
                 for (FourierArm arm : arms) {
-                    arm.render(context, server, armParticle);
+                    arm.render(context, server, armParticle, isFrozen);
                 }
             }
         });

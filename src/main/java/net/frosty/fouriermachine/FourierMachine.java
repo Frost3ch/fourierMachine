@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.frosty.fouriermachine.command.CreateArmCommand;
 import net.frosty.fouriermachine.entity.FourierArmManager;
+import net.frosty.fouriermachine.entity.custom.FourierArm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,8 @@ public class FourierMachine implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		FourierArm.setArmThickness(0.1F);
+		FourierArm.setParticleSize(0.05F);
 		CommandRegistrationCallback.EVENT.register(CreateArmCommand::register);
 
 //		ServerLifecycleEvents.SERVER_STARTED.register(server-> {

@@ -37,12 +37,23 @@ public class FourierArm {
     private boolean isEnd = false;
     private boolean isPrimed = false;
     private FourierArmManager manager;
+    private static float dSize;
+    private static float dThickness;
+    private float size;
+    private float thickness;
 
     private static boolean completedCycle = false;
     private boolean isF1 = false;
 
     public static void resetEndpoints(){
         completedCycle = false;
+    }
+
+    public static void setParticleSize(Float s){
+        dSize = s;
+    }
+    public static void setArmThickness(Float s){
+        dThickness = s;
     }
 
     public FourierArm(Vector3i color, Vec3d pivot, float radius, float rotationSpeed, World world, float angle, boolean f1, FourierArmManager m) {
@@ -57,6 +68,8 @@ public class FourierArm {
         endpoint = new Vec3d((pivot.x + dx), (pivot.y + dy), 0);
         isF1 = f1;
         manager=m;
+        size = dSize;
+        thickness = dThickness;
 
         System.out.println("Fourier Arm Initialized");
 
@@ -75,6 +88,8 @@ public class FourierArm {
         endpoint = new Vec3d((pivot.x + dx), (pivot.y + dy), 0);
         isF1 = f1;
         manager=m;
+        size = dSize;
+        thickness = dThickness;
 
         System.out.println("Fourier Arm Child Initialized");
 
@@ -99,7 +114,7 @@ public class FourierArm {
         isEnd = gamer;
     }
 
-    public void render(WorldRenderContext context, MinecraftServer server, DustParticleEffect armParticle) {
+    public void render(WorldRenderContext context, MinecraftServer server, DustParticleEffect armParticle, boolean isFrozen) {
 
         if (parentArm!=null) {
             pivot = parentArm.getEndpoint();
@@ -109,6 +124,10 @@ public class FourierArm {
         }
         float partialTicks = context.tickCounter().getTickDelta(false);
         float interpolatedAngle = previousAngle + (currentAngle - previousAngle) * partialTicks;
+
+        if (isFrozen){
+            interpolatedAngle = currentAngle;
+        }
 
         MatrixStack matrices = context.matrixStack();
         Camera camera = context.camera();
@@ -135,7 +154,6 @@ public class FourierArm {
         Matrix4f posMat = matrices.peek().getPositionMatrix();
 
         float normGrad = (float) (-1/((endpoint.y-pivot.y)/(endpoint.x-pivot.x)));
-        float thickness = 0.2f;
         float ffX = (float) ((thickness/2)*Math.cos(interpolatedAngle-Math.PI/2));
         float ffY = (float) ((thickness/2)*Math.sin(interpolatedAngle-Math.PI/2));
 
@@ -154,7 +172,7 @@ public class FourierArm {
 
         if (isEnd && isPrimed) {
             if (!completedCycle){
-                System.out.println("added another Endpoint...");
+//                System.out.println("added another Endpoint...");
                 ArrayList<Vec3d> endpoints = manager.getEndpoints();
                 endpoints.add(endpoint);
                 manager.setEndpoints(endpoints);
@@ -162,8 +180,6 @@ public class FourierArm {
             ArrayList<Vec3d> endpoints = manager.getEndpoints();
             if (endpoints!=null) {
                 for (Vec3d endpoint : endpoints) {
-
-                    float size = 0.1f;
                     immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
                     consumer = immediate.getBuffer(RenderLayer.getDebugQuads());
                     posMat = matrices.peek().getPositionMatrix();

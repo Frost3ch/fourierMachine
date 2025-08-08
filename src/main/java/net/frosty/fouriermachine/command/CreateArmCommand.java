@@ -31,7 +31,8 @@ public class CreateArmCommand {
                  .then(CommandManager.argument("y", IntegerArgumentType.integer())
                  .then(CommandManager.argument("z", IntegerArgumentType.integer())
                  .then(CommandManager.argument("iCount", IntegerArgumentType.integer())
-                 .then(CommandManager.argument("size", FloatArgumentType.floatArg()).executes(CreateArmCommand::run))))))));
+                 .then(CommandManager.argument("size", FloatArgumentType.floatArg())
+                 .then(CommandManager.argument("speed", FloatArgumentType.floatArg()).executes(CreateArmCommand::run)))))))));
 
          dispatcher.register(CommandManager.literal("pi")
                  .then(CommandManager.argument("x", IntegerArgumentType.integer())
@@ -40,10 +41,24 @@ public class CreateArmCommand {
                  .then(CommandManager.argument("size", FloatArgumentType.floatArg())
                  .then(CommandManager.argument("speed", FloatArgumentType.floatArg()).executes(CreateArmCommand::runPi)))))));
 
+         dispatcher.register(CommandManager.literal("fourierArmSize")
+                 .then(CommandManager.argument("size", FloatArgumentType.floatArg())
+                 .executes(CreateArmCommand::setArmSize)));
+
+         dispatcher.register(CommandManager.literal("particleSize")
+                 .then(CommandManager.argument("size", FloatArgumentType.floatArg())
+                 .executes(CreateArmCommand::setParticleSize)));
+
          dispatcher.register(CommandManager.literal("resetFourier").executes(CreateArmCommand::reset));
+
+         dispatcher.register(CommandManager.literal("freeze").executes(CreateArmCommand::freeze));
      }
 
 
+    private static int freeze(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        FourierArmManager.isFrozen = !(FourierArmManager.isFrozen);
+        return 1;
+    }
 
      private static int reset(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
          for (FourierArmManager m : managerList){
@@ -52,6 +67,20 @@ public class CreateArmCommand {
          FourierArm.resetEndpoints();
          return 1;
      }
+
+     private static int setArmSize(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+         Float size = FloatArgumentType.getFloat(context, "size");
+         FourierArm.setArmThickness(size);
+         return 1;
+     }
+
+    private static int setParticleSize(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        Float size = FloatArgumentType.getFloat(context, "size");
+        FourierArm.setParticleSize(size);
+        return 1;
+    }
+
+
 
      private static int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
          FourierComputation computer = new FourierComputation();
@@ -72,6 +101,7 @@ public class CreateArmCommand {
          Integer z = IntegerArgumentType.getInteger(context, "z");
          Integer iCount = IntegerArgumentType.getInteger(context, "iCount");
          Float size = FloatArgumentType.getFloat(context, "size");
+         Float speed = FloatArgumentType.getFloat(context, "speed");
 
          Vector2d[] points;
          switch (item){
@@ -103,6 +133,14 @@ public class CreateArmCommand {
                  System.out.println("generating einstein...");
                  points = SVGpoints.getEinstein();
                  break;
+             case "cat":
+                 System.out.println("generating cat...");
+                 points = SVGpoints.getCat();
+                 break;
+             case "stellaOctangula":
+                 System.out.println("generating stellaOctangula...");
+                 points = SVGpoints.getStellaOctangula();
+                 break;
              default:
                  System.out.println("generating fallback...");
                  points = SVGpoints.getPi();
@@ -125,7 +163,7 @@ public class CreateArmCommand {
 
          FourierArmManager manager = new FourierArmManager();
          manager.register(server, particle);
-         manager.defineArms(Y,x,y,z,server);
+         manager.defineArms(Y,x,y,z,server,speed);
          managerList.add(manager);
 
          System.out.println("Fourier Arms Created");

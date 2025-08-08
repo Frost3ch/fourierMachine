@@ -1,6 +1,6 @@
 from svgpathtools import parse_path
 import re
-name = 'einstein'
+name = 'stellaOctangula'
 
 with open(f'{name}.svg','r') as f:
     line = f.readline().strip()
