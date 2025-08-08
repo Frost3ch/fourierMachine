@@ -141,6 +141,10 @@ public class CreateArmCommand {
                  System.out.println("generating stellaOctangula...");
                  points = SVGpoints.getStellaOctangula();
                  break;
+             case "jockey":
+                 System.out.println("generating jockey...");
+                 points = SVGpoints.getJockey();
+                 break;
              default:
                  System.out.println("generating fallback...");
                  points = SVGpoints.getPi();
