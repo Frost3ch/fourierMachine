@@ -41,13 +41,27 @@ public class CreateArmCommand {
                  .then(CommandManager.argument("size", FloatArgumentType.floatArg())
                  .then(CommandManager.argument("speed", FloatArgumentType.floatArg()).executes(CreateArmCommand::runPi)))))));
 
+         dispatcher.register(CommandManager.literal("orbit")
+                 .then(CommandManager.argument("x", IntegerArgumentType.integer())
+                 .then(CommandManager.argument("y", IntegerArgumentType.integer())
+                 .then(CommandManager.argument("z", IntegerArgumentType.integer())
+                 .then(CommandManager.argument("size", FloatArgumentType.floatArg())
+                 .then(CommandManager.argument("speed", FloatArgumentType.floatArg()).executes(CreateArmCommand::orbit)))))));
+
          dispatcher.register(CommandManager.literal("wave")
                  .then(CommandManager.argument("x", IntegerArgumentType.integer())
                  .then(CommandManager.argument("y", IntegerArgumentType.integer())
                  .then(CommandManager.argument("z", IntegerArgumentType.integer())
                  .then(CommandManager.argument("size", FloatArgumentType.floatArg())
                  .then(CommandManager.argument("speed", FloatArgumentType.floatArg())
-                 .then(CommandManager.argument("translationSpeed", FloatArgumentType.floatArg()).executes(CreateArmCommand::wave))))))));
+                 .then(CommandManager.argument("translationSpeed", FloatArgumentType.floatArg())
+                 .then(CommandManager.argument("approximity", IntegerArgumentType.integer()).executes(CreateArmCommand::wave)))))))));
+
+         dispatcher.register(CommandManager.literal("color")
+                 .then(CommandManager.argument("r", IntegerArgumentType.integer())
+                 .then(CommandManager.argument("g", IntegerArgumentType.integer())
+                 .then(CommandManager.argument("b", IntegerArgumentType.integer()).executes(CreateArmCommand::setColor)))));
+
 
          dispatcher.register(CommandManager.literal("fourierArmSize")
                  .then(CommandManager.argument("size", FloatArgumentType.floatArg())
@@ -88,11 +102,21 @@ public class CreateArmCommand {
          return 1;
      }
 
+    private static int setColor(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        Integer r = IntegerArgumentType.getInteger(context,"r");
+        Integer g = IntegerArgumentType.getInteger(context,"g");
+        Integer b = IntegerArgumentType.getInteger(context,"b");
+        FourierArm.setColor(r,g,b);
+        return 1;
+    }
+
     private static int setParticleSize(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         Float size = FloatArgumentType.getFloat(context, "size");
         FourierArm.setParticleSize(size);
         return 1;
     }
+
+
 
 
 
@@ -159,6 +183,10 @@ public class CreateArmCommand {
                  System.out.println("generating jockey...");
                  points = SVGpoints.getJockey();
                  break;
+             case "subscribe":
+                 System.out.println("generating subscribe...");
+                 points = SVGpoints.getSubscribe();
+                 break;
              default:
                  System.out.println("generating fallback...");
                  points = SVGpoints.getPi();
@@ -205,6 +233,24 @@ public class CreateArmCommand {
         return 1;
     }
 
+    private static int orbit(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+
+        Integer x = IntegerArgumentType.getInteger(context, "x");
+        Integer y = IntegerArgumentType.getInteger(context, "y");
+        Integer z = IntegerArgumentType.getInteger(context, "z");
+        Float size = FloatArgumentType.getFloat(context, "size");
+        Float speed = FloatArgumentType.getFloat(context, "speed");
+        MinecraftServer server = context.getSource().getServer();
+
+        FourierArmManager manager = new FourierArmManager();
+        manager.register(server);
+        manager.defineArms(x,y,z,server,size,speed,false);
+        managerList.add(manager);
+
+        System.out.println("Orbit Visualisation Created}");
+        return 1;
+    }
+
     private static int wave(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
 
         Integer x = IntegerArgumentType.getInteger(context, "x");
@@ -213,12 +259,13 @@ public class CreateArmCommand {
         Float size = FloatArgumentType.getFloat(context, "size");
         Float speed = FloatArgumentType.getFloat(context, "speed");
         Float translationSpeed = FloatArgumentType.getFloat(context, "translationSpeed");
+        Integer approximity = IntegerArgumentType.getInteger(context, "approximity");
 
         MinecraftServer server = context.getSource().getServer();
 
         FourierArmManager manager = new FourierArmManager();
         manager.register(server);
-        manager.defineArms(x,y,z,server,size,speed,translationSpeed);
+        manager.defineArms(x,y,z,server,size,speed,translationSpeed,approximity);
         managerList.add(manager);
 
         System.out.println("Generating wave, translation speed is: " + translationSpeed);

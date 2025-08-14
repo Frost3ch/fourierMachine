@@ -17,6 +17,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -45,14 +46,43 @@ public class FourierArm {
     private float size;
     private float thickness;
     private float translationSpeed=0;
+    private static Vec3i endColor;
+    private static Vec3i altColor;
 
     private static boolean completedCycle = false;
     private boolean isF1 = false;
+
+    private ArrayList<Vec3d> ends;
+
+    public FourierArm(Vector3i color, Vec3d pivot, float radius, float rotationSpeed, World world, float angle, boolean f1, FourierArmManager m, Float tSpeed, Vec3i aColor) {
+        startingAngle = angle;
+        currentAngle = angle;
+        this.color = color;
+        this.pivot = pivot;
+        this.radius = radius;
+        this.rotationSpeed = rotationSpeed;
+        double dx = radius * Math.cos(currentAngle);
+        double dy = radius * Math.sin(currentAngle);
+        endpoint = new Vec3d((pivot.x + dx), (pivot.y + dy), 0);
+        isF1 = f1;
+        manager=m;
+        size = dSize;
+        thickness = dThickness;
+        translationSpeed = tSpeed;
+        altColor = aColor;
+        ends = new ArrayList<>();
+
+        System.out.println("Fourier Arm Initialized");
+
+    }
 
     public static void resetEndpoints(){
         completedCycle = false;
     }
 
+    public static void setColor(Integer r, Integer g, Integer b) {
+        endColor = new Vec3i(r,g,b);
+    }
     public static void setParticleSize(Float s){
         dSize = 0.05F*s;
     }
@@ -195,12 +225,34 @@ public class FourierArm {
 
         immediate.draw(); // flushes the lines
 
+        if (altColor!=null){
+            if (ends!=null) {
+                ends.add(endpoint);
+                for (Vec3d ep:ends) {
+                    immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
+                    consumer = immediate.getBuffer(RenderLayer.getDebugQuads());
+                    posMat = matrices.peek().getPositionMatrix();
+
+                    consumer.vertex(posMat, (float) ep.x + size, (float) ep.y + size, (float) ep.z).color(altColor.getX(), altColor.getY(), altColor.getZ(), 255);
+                    consumer.vertex(posMat, (float) ep.x + size, (float) ep.y - size, (float) ep.z).color(altColor.getX(), altColor.getY(), altColor.getZ(), 255);
+                    consumer.vertex(posMat, (float) ep.x - size, (float) ep.y + size, (float) ep.z).color(altColor.getX(), altColor.getY(), altColor.getZ(), 255);
+                    consumer.vertex(posMat, (float) ep.x - size, (float) ep.y - size, (float) ep.z).color(altColor.getX(), altColor.getY(), endColor.getZ(), 255);
+
+                    immediate.draw();
+                }
+            }
+        }
+
         if (isEnd && isPrimed) {
             if (!completedCycle){
 //                System.out.println("added another Endpoint...");
                 ArrayList<Vec3d> endpoints = manager.getEndpoints();
                 if (translationSpeed!=0){
-                    endpoints.add(new Vec3d((float) pivot.x + radius,endpoint.y,endpoint.z));
+                    FourierArm cArm = this;
+                    while (cArm.parentArm!=null){
+                        cArm = cArm.parentArm;
+                    }
+                    endpoints.add(new Vec3d((float) cArm.pivot.x,endpoint.y,endpoint.z));
                 }
                 else {
                     endpoints.add(endpoint);
@@ -219,10 +271,10 @@ public class FourierArm {
                     consumer = immediate.getBuffer(RenderLayer.getDebugQuads());
                     posMat = matrices.peek().getPositionMatrix();
 
-                    consumer.vertex(posMat, (float) endpoint.x + size, (float) endpoint.y + size, (float) endpoint.z).color(0, 0, 0, 255);
-                    consumer.vertex(posMat, (float) endpoint.x + size, (float) endpoint.y - size, (float) endpoint.z).color(0, 0, 0, 255);
-                    consumer.vertex(posMat, (float) endpoint.x - size, (float) endpoint.y + size, (float) endpoint.z).color(0, 0, 0, 255);
-                    consumer.vertex(posMat, (float) endpoint.x - size, (float) endpoint.y - size, (float) endpoint.z).color(0, 0, 0, 255);
+                    consumer.vertex(posMat, (float) endpoint.x + size, (float) endpoint.y + size, (float) endpoint.z).color(endColor.getX(), endColor.getY(), endColor.getZ(), 255);
+                    consumer.vertex(posMat, (float) endpoint.x + size, (float) endpoint.y - size, (float) endpoint.z).color(endColor.getX(), endColor.getY(), endColor.getZ(), 255);
+                    consumer.vertex(posMat, (float) endpoint.x - size, (float) endpoint.y + size, (float) endpoint.z).color(endColor.getX(), endColor.getY(), endColor.getZ(), 255);
+                    consumer.vertex(posMat, (float) endpoint.x - size, (float) endpoint.y - size, (float) endpoint.z).color(endColor.getX(), endColor.getY(), endColor.getZ(), 255);
 
                     immediate.draw(); // flushes the lines
 

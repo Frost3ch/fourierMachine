@@ -1,7 +1,4 @@
-from svgpathtools import parse_path
-import re
-name = 'jockey'
-
+name = 'sword'
 with open(f'{name}.svg','r') as f:
     line = f.readline().strip()
     c = 1

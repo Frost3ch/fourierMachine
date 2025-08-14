@@ -12,10 +12,6 @@ public class FourierComputation {
          Double[][] X = new Double[N][];
          int m = N/2;
 
-
-
-//         System.out.println("Made it past the first bit :)");
-
          for (int k=-m;k<m;k++){
              double re = 0.0;
              double im = 0.0;
@@ -27,12 +23,10 @@ public class FourierComputation {
                      double x_n = -size*points[n+m].x;
                      double y_n = -size*points[n+m].y;
 
-    //                 (x+iy)(cos(theta)-isin(theta))
 
                      re += x_n * Math.cos(theta) + y_n * Math.sin(theta);
                      im += -x_n * Math.sin(theta) + y_n * Math.cos(theta);
 
-//                     System.out.println("Sum " + n + " for coefficient X_" + k);
                  } catch (Exception e) {
                      e.printStackTrace();
                  }
@@ -45,11 +39,9 @@ public class FourierComputation {
              double amp = Math.hypot(re, im);
              double phase = Math.atan2(im, re);
 
-//             System.out.println("Computed coefficient X_" + k);
 
              X[k+m] = new Double[] {re, im, freq, amp, phase};
 
-//             System.out.println("onto the next");
          }
          Arrays.sort(X, (x, y)-> Double.compare(y[3],x[3]));
          return X;
