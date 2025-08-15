@@ -39,4 +39,3 @@ replay_*.log
 *.jfr
 
 # Project exclude paths
-/build/
